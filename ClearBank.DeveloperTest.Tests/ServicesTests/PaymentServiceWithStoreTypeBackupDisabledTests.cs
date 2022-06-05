@@ -163,7 +163,7 @@ public class PaymentServiceWithStoreTypeBackupDisabledTests
     }
 
     [Fact]
-    public void MakePayment_ForRequest_ReturnsSuccess_True_ShouldReturnLateOnBackupStoreDisabled()
+    public void MakePayment_ForRequest_ReturnsSuccess_True_ShouldReturnLastOnBackupStoreDisabled()
     {
         var paymentRequest = fixture.Create<MakePaymentRequest>();
 
