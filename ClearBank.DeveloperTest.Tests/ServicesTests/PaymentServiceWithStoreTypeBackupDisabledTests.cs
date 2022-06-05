@@ -161,4 +161,26 @@ public class PaymentServiceWithStoreTypeBackupDisabledTests
         account.Balance -= paymentRequest.Amount;
         mockAccountDataStore.Verify(x => x.UpdateAccount(It.Is<Account>(x => x == account)), Times.Once);
     }
+
+    [Fact]
+    public void MakePayment_ForRequest_ReturnsSuccess_True_ShouldReturnLateOnBackupStoreDisabled()
+    {
+        var paymentRequest = fixture.Create<MakePaymentRequest>();
+
+        var account = fixture.Create<Account>();
+        account.AccountNumber = paymentRequest.DebtorAccountNumber;
+        account.AllowedPaymentSchemes = PaymentServiceTestHelper.GetAllowedPaymentSchemesForRequest(paymentRequest.PaymentScheme);
+        account.Status = AccountStatus.Live;
+        account.Balance += paymentRequest.Amount;
+
+        mockAccountDataStore
+            .Setup(x => x.GetAccount(It.Is<string>(x => x == paymentRequest.DebtorAccountNumber)))
+            .Returns(account);
+
+        var result = paymentService.MakePayment(paymentRequest);
+
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        mockBackupAccountDataStore.Verify(x => x.UpdateAccount(It.IsAny<Account>()), Times.Never);
+    }
 }
