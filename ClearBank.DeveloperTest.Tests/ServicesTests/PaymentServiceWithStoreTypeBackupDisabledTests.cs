@@ -11,7 +11,7 @@ using Xunit;
 
 namespace ClearBank.DeveloperTest.Tests.ServicesTests;
 
-public class PaymentServiceWithBackupStoreDisabledTests
+public class PaymentServiceWithStoreTypeBackupDisabledTests
 {
     private readonly IConfiguration configuration;
     private readonly Mock<IAccountDataStore> mockAccountDataStore = new Mock<IAccountDataStore>();
@@ -19,7 +19,7 @@ public class PaymentServiceWithBackupStoreDisabledTests
     private readonly Fixture fixture;
     private IPaymentService paymentService;
 
-    public PaymentServiceWithBackupStoreDisabledTests()
+    public PaymentServiceWithStoreTypeBackupDisabledTests()
     {
         configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string> { }).Build();
         paymentService = new PaymentService(mockAccountDataStore.Object, mockBackupAccountDataStore.Object, configuration);

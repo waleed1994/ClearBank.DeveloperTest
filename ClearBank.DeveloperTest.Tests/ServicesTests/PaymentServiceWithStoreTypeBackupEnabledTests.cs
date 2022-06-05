@@ -10,7 +10,7 @@ using Xunit;
 
 namespace ClearBank.DeveloperTest.Tests.ServicesTests;
 
-public class PaymentServiceWithBackupStoreEnabledTests
+public class PaymentServiceWithStoreTypeBackupEnabledTests
 {
     private readonly IConfiguration configuration;
     private readonly Mock<IAccountDataStore> mockAccountDataStore = new Mock<IAccountDataStore>();
@@ -18,7 +18,7 @@ public class PaymentServiceWithBackupStoreEnabledTests
     private readonly Fixture fixture;
     private IPaymentService paymentService;
 
-    public PaymentServiceWithBackupStoreEnabledTests()
+    public PaymentServiceWithStoreTypeBackupEnabledTests()
     {
         var inMemorySettings = new Dictionary<string, string> { { "DataStoreType", "Backup" } };
         configuration= new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
