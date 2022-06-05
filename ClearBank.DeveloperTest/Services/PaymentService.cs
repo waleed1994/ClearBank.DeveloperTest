@@ -1,62 +1,36 @@
-﻿using ClearBank.DeveloperTest.Data;
-using ClearBank.DeveloperTest.Types;
-using Microsoft.Extensions.Configuration;
-using System;
+﻿using ClearBank.DeveloperTest.Types;
+using ClearBank.DeveloperTest.Validators;
 
 namespace ClearBank.DeveloperTest.Services;
 
 public class PaymentService : IPaymentService
 {
-    private readonly IAccountDataStore accountDataStore;
-    private readonly IBackupAccountDataStore backupAccountDataStore;
-    private readonly IConfiguration configuration;
-    private bool isStoreTpyeBackup => string.Equals(configuration["DataStoreType"], "Backup", StringComparison.CurrentCultureIgnoreCase);
+    private readonly IAccountService accountService;
+    private readonly IPaymentsValidator paymentsValidator;
 
-    public PaymentService(IAccountDataStore accountDataStore, IBackupAccountDataStore backupAccountDataStore, IConfiguration configuration)
+    public PaymentService(IAccountService accountService, IPaymentsValidator paymentsValidator)
     {
-        this.accountDataStore = accountDataStore;
-        this.backupAccountDataStore = backupAccountDataStore;
-        this.configuration = configuration;
+        this.accountService = accountService;
+        this.paymentsValidator = paymentsValidator;
     }
 
     public MakePaymentResult MakePayment(MakePaymentRequest request)
     {
-        Account account = GetAccount(request.DebtorAccountNumber);
+        var account = accountService.GetAccount(request.DebtorAccountNumber);
 
-        if (account == null || account.Balance < request.Amount) return new MakePaymentResult { Success = false };
+        if (account == null) return new MakePaymentResult { Success = false };
 
-        var result = new MakePaymentResult
-        {
-            Success = CanPaymentBeProcessed(account, request.PaymentScheme)
+        var result = new MakePaymentResult 
+        { 
+            Success = paymentsValidator.Validate(request.PaymentScheme, account, request.Amount)
         };
-
-        if (!result.Success)
-            return result;
+        
+        if (!result.Success) return result;
 
         account.Balance -= request.Amount;
 
-        if (isStoreTpyeBackup)
-        {
-            backupAccountDataStore.UpdateAccount(account);
-            return result;
-        }
+        accountService.UpdateAccount(account);
 
-        accountDataStore.UpdateAccount(account);
         return result;
     }
-
-    private Account GetAccount(string accountNumber)
-    {
-        return isStoreTpyeBackup ?  
-            backupAccountDataStore.GetAccount(accountNumber) : 
-            accountDataStore.GetAccount(accountNumber);
-    }
-
-    private bool CanPaymentBeProcessed(Account account, PaymentScheme requestedPaymentScheme) => requestedPaymentScheme switch
-    {
-        PaymentScheme.Bacs => account.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.Bacs) && account.Status == AccountStatus.Live,
-        PaymentScheme.FasterPayments => account.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.FasterPayments) && account.Status == AccountStatus.Live,
-        PaymentScheme.Chaps => account.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.Chaps) && account.Status == AccountStatus.Live,
-        _ => throw new ArgumentOutOfRangeException(nameof(requestedPaymentScheme), $"Not expected requested payment scheme type: {requestedPaymentScheme}")
-    };
 }

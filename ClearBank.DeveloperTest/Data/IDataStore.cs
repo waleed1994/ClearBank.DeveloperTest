@@ -2,8 +2,8 @@
 
 namespace ClearBank.DeveloperTest.Data;
 
-public interface IBackupAccountDataStore
+public interface IDataStore
 {
     public Account GetAccount(string accountNumber);
-    void UpdateAccount(Account account);
+    public void UpdateAccount(Account account);
 }
